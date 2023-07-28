@@ -1,0 +1,3 @@
+PLAYER_ONE = 'X'
+PLAYER_TWO = 'O'
+EMPTY_SPACE = ' '
