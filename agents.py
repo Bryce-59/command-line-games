@@ -17,7 +17,8 @@ class Agent(ABC):
         
     def _run_min_max(self, game_state, win, lose, draw):
         is_terminal, winner = game_state._is_terminal()
-        if is_terminal:
+        children = game_state.get_children()
+        if is_terminal or len(children) == 0:
             if winner == None:
                 return game_state, draw
             elif winner == self.player:
@@ -29,7 +30,7 @@ class Agent(ABC):
             best = lose if self.player == game_state.get_player() else win
             ret = None
 
-            for child in game_state.get_children():
+            for child in children:
                 _, score = self._run_min_max(child, win, lose, draw)
                 if self.player != child.get_player():
                     # MAX
@@ -48,10 +49,6 @@ class Agent(ABC):
                     if score <= best:
                         best = score
                         ret = child
-
-            # print(self.player, game_state.get_player())
-            # game_state.print_board()
-            # print(game_state.get_children())
 
             assert ret is not None
             return ret, best
