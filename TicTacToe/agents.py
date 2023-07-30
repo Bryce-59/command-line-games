@@ -5,19 +5,20 @@ from variables import EMPTY_SPACE
 class Agent(ABC):
     @abstractmethod
     def __init__(self, name, player):
-        self.name = name
-        self.player = player
+        self._name = name
+        self._player = player
     
     def _choose_successor(self, game_state, win=None, lose=None, draw=None):
         if win == lose and lose == draw:
-            return random.choice(game_state.get_children())
+            return random.choice(game_state.children)
         
         assert win is not None and lose is not None and draw is not None
         return self._run_min_max(game_state, win, lose, draw)[0]
         
     def _run_min_max(self, game_state, win, lose, draw):
-        is_terminal, winner = game_state._is_terminal()
-        children = game_state.get_children()
+        is_terminal = game_state.is_terminal
+        winner = game_state.winner
+        children = game_state.children
         if is_terminal or len(children) == 0:
             if winner == None:
                 return game_state, draw
@@ -27,12 +28,12 @@ class Agent(ABC):
                 return game_state, lose
             
         else:
-            best = lose if self.player == game_state.get_player() else win
+            best = lose if self.player == game_state.player else win
             ret = None
 
             for child in children:
                 _, score = self._run_min_max(child, win, lose, draw)
-                if self.player != child.get_player():
+                if self.player != child.player:
                     # MAX
                     if score == win:
                         return child, win
@@ -54,11 +55,13 @@ class Agent(ABC):
             return ret, best
 
 
-    def get_name(self):
-        return self.name
+    @property
+    def name(self):
+        return self._name
     
-    def get_player(self):
-        return self.player
+    @property
+    def player(self):
+        return self._player
 
     @abstractmethod
     def select_move(self, board):
@@ -93,7 +96,7 @@ class PlayerAgent(Agent):
         super().__init__(name, player)
 
     def select_move(self, game_state):
-        tmp = game_state.copy_board()
+        tmp = game_state.board
 
         while True:
             col = 0
@@ -125,8 +128,8 @@ class PlayerAgent(Agent):
                 tmp[row-1][col-1] = self.player
                 break
 
-        for child in game_state.get_children():
-            if tmp == child.copy_board():
+        for child in game_state.children:
+            if tmp == child.board:
                 return child
         
         print("Sorry, there was a problem")

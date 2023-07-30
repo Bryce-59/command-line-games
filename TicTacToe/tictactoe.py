@@ -3,16 +3,36 @@ import time
 from variables import PLAYER_ONE, PLAYER_TWO, EMPTY_SPACE
 from agents import PlayerAgent, RandomAgent, FlawedAgent, UnbeatableAgent 
 
-
 class TicTacToe:
     class _State:
+        @property
+        def board(self):
+            return [r[:] for r in self._board]
+        
+        @property
+        def children(self):
+            ret = self._children.copy()
+            random.shuffle(ret)
+            return ret 
+        
+        @property
+        def player(self):
+            return self._next_player
+        
+        @property
+        def is_terminal(self):
+            return self._win_state[0]
+
+        @property
+        def winner(self):
+            return self._win_state[1]
+
 
         def __init__(self, board, next_player):
             self._board = board
             self._next_player = next_player
             self._children = []
-
-            self._generate_children()
+            self._win_state = self._is_terminal()
 
         def __eq__(self, other):
             try:
@@ -53,42 +73,22 @@ class TicTacToe:
             # Test whether a tie or a non-terminal State.
             return (not any(EMPTY_SPACE in r for r in self._board), None)
 
-        def _generate_children(self):
-            """Recursively builds the subtree of States beginning with this State.
-            
-            In theory, the recursion depth should never exceed 9."""
+        def add_child(self, node):
+            if node not in self._children:
+                self._children.append(node)
 
-            if not self.is_terminal():
+        def _generate_children(self):
+            if not self.is_terminal:
 
                 child_player = PLAYER_ONE if self._next_player == PLAYER_TWO else PLAYER_TWO
                 for r in range(3):
                     for c in range(3):
-                        child_board = self.copy_board()
+                        child_board = self.board
 
                         if child_board[r][c] == EMPTY_SPACE:
                             child_board[r][c] = self._next_player
                             child = TicTacToe._State(child_board, child_player)
-                            self._children.append(child)
-
-                random.shuffle(self._children)
-        
-        def copy_board(self):
-            """Create a copy of the State board. 
-            
-            The original State board should never be accessed from the outside."""
-            return [r[:] for r in self._board]
-        
-        def get_children(self):
-            return self._children
-        
-        def get_player(self):
-            return self._next_player
-        
-        def get_winner(self):
-            return self._is_terminal()[1]
-        
-        def is_terminal(self):
-            return self._is_terminal()[0]
+                            self.add_child(child)
             
 
         def print_board(self):
@@ -109,9 +109,22 @@ class TicTacToe:
                 if (r < len(self._board) - 1):
                     print("   ---+---+---")
 
+    @property
+    def board(self):
+        return self.state.board
+
     def __init__(self):
         self.root = TicTacToe._State(self._get_root(), PLAYER_ONE)
         self.start_game()
+        self._generate_tree(self.root)
+
+    def _generate_tree(self, node):
+        """Recursively builds the subtree of States beginning with this State.
+            
+            In theory, the recursion depth should never exceed 9."""
+        node._generate_children()
+        for child in node._children:
+            self._generate_tree(child)
 
     def _get_root(self):
         board = []
@@ -124,24 +137,21 @@ class TicTacToe:
         return board
     
     def _will_tie(self, state):
-        ret = state.get_winner() == None
+        ret = state.winner == None
 
-        for child in state.get_children():
+        for child in state._children:
             ret &= self._will_tie(child)
             
             if not ret:
                 return False
 
         return ret
-        
-    def get_state(self):
-        return self.state.copy_board()
     
     def get_winner(self):
-        return self.state.get_winner()
+        return self.state.winner
 
     def is_terminal(self):
-        ret = self.state.is_terminal()
+        ret = self.state.is_terminal
         if ret or self._will_tie(self.state):
             return True
         return ret
@@ -151,7 +161,7 @@ class TicTacToe:
 
     def take_turn(self, player):
         nxt = player.select_move(self.state)
-        assert nxt != None and nxt in self.state.get_children()
+        assert nxt != None and nxt in self.state._children
         self.state = nxt
 
     def start_game(self):
@@ -159,6 +169,31 @@ class TicTacToe:
 
 def _start():
     pass
+
+def ask_ai(difficulty, name, turn):
+    assert(difficulty > 0 and difficulty <= 3)
+
+    ret = None
+    if difficulty == 1:
+        ret = RandomAgent(name, turn)
+    elif difficulty == 2:
+        ret = FlawedAgent(name, turn)
+    elif difficulty == 3:
+        ret = UnbeatableAgent(name, turn)
+    return ret
+
+def ask_difficulty(message):
+    ret = None
+    while True:
+        try:
+            ret = int(input(message + " (Enter 1 for EASY, 2 for NORMAL, 3 for HARD): "))
+            if ret <= 0 or ret > 3:
+                raise ValueError
+            break 
+        except ValueError:
+            print("Sorry, that is not a valid difficulty level.")
+
+    return ret
 
 def main():
     print("Welcome to the TicTacToe Player!")
@@ -173,30 +208,32 @@ def main():
         while True:
             try:
                 num_players = int(input("How many players? (Enter 1 or 2): "))
-                if num_players <= 0 or num_players > 2:
+                if num_players < 0 or num_players > 2:
                     raise ValueError 
                 break
 
             except ValueError:
                 print("Sorry, that is not a valid number of players.")
 
+        ai_level_bonus = 0
         ai_level = 0
+        if num_players == 0: 
+            print()
+            print("You found the secret 0-player mode!")
+            ai_level_bonus = ask_difficulty("What level should the first CPU be?")
+            ai_level = ask_difficulty("What level should the second CPU be?")
+
         if num_players == 1:
-            while True:
-                try:
-                    ai_level = int(input("What level CPU do you want to play against? (Enter 1 for EASY, 2 for NORMAL, 3 for HARD): "))
-                    if ai_level <= 0 or ai_level > 3:
-                        raise ValueError
-                    break 
+            ai_level = ask_difficulty("What level CPU do you want to play against?")
 
-                except ValueError:
-                    print("Sorry, that is not a valid difficulty level.")
-
-        assert num_players == 1 or num_players == 2
+        assert num_players == 0 or num_players == 1 or num_players == 2
         assert ai_level >= 0 and ai_level <= 3
 
         p1_name = "Human" if num_players == 1 else "Player 1"
         p2_name = "CPU" if num_players == 1 else "Player 2"
+
+        p1_name = "CPU_1" if num_players == 0 else p1_name
+        p2_name = "CPU_2" if num_players == 0 else p2_name
 
         p1_turn = PLAYER_ONE # if num_players == 2 or random.randint(1, 2) == 1 else PLAYER_TWO
         p2_turn = PLAYER_TWO if p1_turn == PLAYER_ONE else PLAYER_ONE
@@ -204,21 +241,19 @@ def main():
         assert p1_turn != p2_turn
 
         p1 = PlayerAgent(p1_name, p1_turn)
+        if num_players == 0:
+            p1 = ask_ai(ai_level_bonus, p1_name, p1_turn)
+
         p2 = None
-        if int(num_players) == 2:
+        if num_players == 2:
             p2 = PlayerAgent(p2_name, p2_turn)
-        elif int(num_players) == 1:
-            if ai_level == 1:
-                p2 = RandomAgent(p2_name, p2_turn)
-            elif ai_level == 2:
-                p2 = FlawedAgent(p2_name, p2_turn)
-            elif ai_level == 3:
-                p2 = UnbeatableAgent(p2_name, p2_turn)
+        else:
+            p2 = ask_ai(ai_level, p2_name, p2_turn)
 
         assert p2 is not None
 
-        player_1 = p1 if p1.get_player() == PLAYER_ONE else p2
-        player_2 = p1 if p1.get_player() == PLAYER_TWO else p2
+        player_1 = p1 if p1.player == PLAYER_ONE else p2
+        player_2 = p1 if p1.player == PLAYER_TWO else p2
 
         while not game_tree.is_terminal():
             print()
@@ -226,7 +261,7 @@ def main():
             
             game_tree.print_board()
             print()
-            print(player_1.get_name()+", it is your turn!")
+            print(player_1.name+", it is your turn!")
             if not isinstance(player_1, PlayerAgent):
                 time.sleep(2)
 
@@ -240,7 +275,7 @@ def main():
 
             game_tree.print_board()
             print()
-            print(player_2.get_name()+", it is your turn!")
+            print(player_2.name+", it is your turn!")
             if not isinstance(player_2, PlayerAgent):
                 time.sleep(2)
 
@@ -252,9 +287,9 @@ def main():
         print()
 
         if game_tree.get_winner() == PLAYER_ONE:
-            print(player_1.get_name()+" wins!!")
+            print(player_1.name+" wins!!")
         elif game_tree.get_winner() == PLAYER_TWO:
-            print(player_2.get_name()+" wins!!")
+            print(player_2.name+" wins!!")
         else:
             print("It is a tie.")
 

@@ -59,30 +59,30 @@ class TicTacToeStateTests(unittest.TestCase):
     def test_generate_children(self):
         # test that generate_children() creates the right children
         test = TicTacToe._State(ex0[0], ex0[1])
-        self.assertTrue(len(test.get_children()) == 0)
-        test.generate_children()
-        self.assertTrue(len(test.get_children()) == 9)
+        self.assertTrue(len(test.children) == 0)
+        test._generate_children()
+        self.assertTrue(len(test.children) == 9)
         
         expected_out = [ex00[0], ex01[0], ex02[0], ex03[0], ex04[0], ex05[0], ex06[0], ex07[0], ex08[0]]
-        for child in test.get_children():
-            self.assertTrue(child.copy_board() in expected_out)
+        for child in test.children:
+            self.assertTrue(child.board in expected_out)
 
         test2 = TicTacToe._State(ex00[0], ex00[1])
-        test2.generate_children()
+        test2._generate_children()
         expected_out2 = [ex000[0], ex001[0], ex002[0], ex003[0], ex004[0], ex005[0], ex006[0], ex007[0]]
-        for child in test2.get_children():
-            self.assertTrue(child.copy_board() in expected_out2)
+        for child in test2.children:
+            self.assertTrue(child.board in expected_out2)
         # test that generate_children does not add redundant children if re-run
-        test2.generate_children()
-        self.assertTrue(len(test2.get_children()) == 8)
+        test2._generate_children()
+        self.assertTrue(len(test2.children) == 8)
 
         # test that generate_children does not generate children for terminal states
         test3 = TicTacToe._State(ex2[0], ex2[1])
-        test3.generate_children()
+        test3._generate_children()
         expected_out3 = []
-        self.assertTrue(len(test3.get_children()) == 0)
-        for child in test3.get_children():
-            self.assertTrue(child.copy_board() in expected_out3)
+        self.assertTrue(len(test3.children) == 0)
+        for child in test3.children:
+            self.assertTrue(child.board in expected_out3)
 
     def test_is_terminal(self):
         #test that is_terminal() and get_winner() return the correct output 
@@ -90,44 +90,44 @@ class TicTacToeStateTests(unittest.TestCase):
         xlist = [ex1a, ex2a, ex3a, ex4a, ex5a, ex6a, ex7a, ex8a]
         for ex in xlist:
             test = TicTacToe._State(ex[0], ex[1])
-            self.assertTrue(test.is_terminal())
-            self.assertTrue(test.get_winner() == x)
+            self.assertTrue(test.is_terminal)
+            self.assertTrue(test.winner == x)
             
         #test when o is winner
         olist = [ex1b, ex2b, ex3b, ex4b, ex5b, ex6b, ex7b, ex8b]
         for ex in olist:
             test = TicTacToe._State(ex[0], ex[1])
-            self.assertTrue(test.is_terminal())
-            self.assertTrue(test.get_winner() == o)
+            self.assertTrue(test.is_terminal)
+            self.assertTrue(test.winner == o)
 
         # test tie state
         tie = TicTacToe._State(ex9ab[0], ex9ab[1])
-        self.assertTrue(tie.is_terminal())
-        self.assertTrue(tie.get_winner() == None)
+        self.assertTrue(tie.is_terminal)
+        self.assertTrue(tie.winner == None)
 
         # test non-terminal states
         elist = [ex000, ex001, ex002, ex003, ex004, ex005, ex006, ex007]
         for ex in elist:
             test = TicTacToe._State(ex[0], ex[1])
-            self.assertFalse(test.is_terminal())
-            self.assertTrue(test.get_winner() == None)
+            self.assertFalse(test.is_terminal)
+            self.assertTrue(test.winner == None)
 
     def test_get_player(self):
-        #test that get_player() works as intended
+        #test that player works as intended
         test = TicTacToe._State(ex0[0], ex0[1])
-        self.assertTrue(test.get_player() == ex0[1])
-        test.generate_children()
-        for child in test.get_children():
-            self.assertTrue(child.get_player() == o if ex0[1] == x else x)
+        self.assertTrue(test.player == ex0[1])
+        test._generate_children()
+        for child in test.children:
+            self.assertTrue(child.player == o if ex0[1] == x else x)
 
-        self.assertTrue(TicTacToe._State(ex9ab[0], ex9ab[1]).get_player() == ex9ab[1])
+        self.assertTrue(TicTacToe._State(ex9ab[0], ex9ab[1]).player == ex9ab[1])
 
     def test_copy_board(self):
-        #test that copy_board() works as intended
+        #test that board works as intended
         xlist = [ex1a, ex2a, ex3a, ex4a, ex5a, ex6a, ex7a, ex8a]
         for ex in xlist:
             test = TicTacToe._State(ex[0], ex[1])
-            self.assertEqual(test.copy_board(), ex[0])
+            self.assertEqual(test.board, ex[0])
 
 ex10 = ([[x,o,x],[e,e,e],[x,o,e]], o)
 ex10a = ([[x,o,x],[o,e,e],[x,o,e]], x)
@@ -140,8 +140,8 @@ class UnbeatableAgentTests(unittest.TestCase):
     def test_basic(self):
         # test 0: basic functionality
         player_1 = UnbeatableAgent("1",x)
-        self.assertTrue(player_1.get_name() == "1")
-        self.assertTrue(player_1.get_player() == x)
+        self.assertTrue(player_1.name == "1")
+        self.assertTrue(player_1.player == x)
 
     def test_theoretical(self):
         # test 1: see that the unbeatable agents minmax operation functions
@@ -155,7 +155,7 @@ class UnbeatableAgentTests(unittest.TestCase):
         test_state.add_child(TicTacToe._State(ex10b[0], ex10b[1]))
 
         output = player_1.select_move(test_state)
-        self.assertEqual(output.copy_board(),ex10b[0])
+        self.assertEqual(output.board,ex10b[0])
     
     def test_practical(self):
         # test 2: an unbeatable agent should never lose to another agent
