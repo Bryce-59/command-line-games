@@ -1,7 +1,14 @@
+"""Command-Line TicTacToe Unit Tests
+
+This script allows the user to perform unit tests on the 
+Command-Line TicTacToe structures.
+"""
+
 import unittest
+
+from agents import PlayerAgent, RandomAgent, FlawedAgent, UnbeatableAgent
 from tictactoe import TicTacToe
 from variables import PLAYER_ONE as x, PLAYER_TWO as o, EMPTY_SPACE as e
-from agents import PlayerAgent, RandomAgent, FlawedAgent, UnbeatableAgent
 
 test_game = TicTacToe()
 
@@ -148,11 +155,11 @@ class UnbeatableAgentTests(unittest.TestCase):
         player_1 = UnbeatableAgent("2",o)
 
         sub_state = TicTacToe._State(ex10a[0], ex10a[1])
-        sub_state.add_child(TicTacToe._State(ex10aa[0], ex10aa[1]))
-        sub_state.add_child(TicTacToe._State(ex10ab[0], ex10ab[1]))
+        sub_state._children.append(TicTacToe._State(ex10aa[0], ex10aa[1]))
+        sub_state._children.append(TicTacToe._State(ex10ab[0], ex10ab[1]))
         test_state = TicTacToe._State(ex10[0], ex10[1])
-        test_state.add_child(sub_state)
-        test_state.add_child(TicTacToe._State(ex10b[0], ex10b[1]))
+        test_state._children.append(sub_state)
+        test_state._children.append(TicTacToe._State(ex10b[0], ex10b[1]))
 
         output = player_1.select_move(test_state)
         self.assertEqual(output.board,ex10b[0])

@@ -1,33 +1,51 @@
+"""Command-Line Hangman Agents
+
+This file includes the agents which manage each game of Hangman.
+
+There are four agents which can be imported to other files: 
+    -HangmanAgent, which manages Normal Mode;
+    -EvilAgent, which manages Hard mode and is a sub-class of HangmanAgent;
+    -HelpAgent, which manages Easy Mode and is a sub-class of EvilAgent;
+    -PlayerAgent, which manages Two-Player and is a sub-class of HangmanAgent.
+"""
+
 import pwinput
 from variables import SECRET, SPACE_IN, SPACE_OUT
 import random
 
 class HangmanAgent():
     """
-    A class used to play a game of Hangman
+    A class used to play a normal game of Hangman
 
     ...
 
     Attributes
     ----------
     
-    guesses_made : int
-    
-    num_guesses : int
+    guesses_made : list
+        the list of characters guessed made by the player 
 
+    num_guesses : int
+        the number of wrong guesses the player has left
+    
     pattern : str
+        the secret word with only the guesses revealed 
 
     secret_word : str
+        the secret word that the player should guess
 
 
     Methods
     -------
 
     make_guess()
+        Request the user's next guess and return whether the guess was correct.
 
     is_terminal()
+        Returns whether the game has ended.
 
     start_game()
+        Reset the internal state and choose a new secret word. Must be called before a game can be played.
 
     """
 
@@ -47,24 +65,30 @@ class HangmanAgent():
     def guesses_left(self):
         return self._guesses_left
     
-
     def __init__(self):
         pass
 
+    # The following methods are used for the initialization of a game.
+
     def start_game(self):
+        """Reset the internal state and choose a new secret word.""" 
         self._reset()
         f = open("dictionary.txt", "r", encoding="utf8")
         self._secret_word = self._choose_from_dict(f.read().splitlines())
 
     def _reset(self):
+        """Reset the internal variables to default values."""    
         self._guesses_left = 7
         self._guesses_made = []
 
     def _choose_from_dict(self, dict):
+        """Choose a secret word from a dictionary.""" 
         return random.choice(dict)
     
+    # The following functions represent settings related to input and output.
 
     def _get_pattern(self, word):
+        """Take a word and return the pattern that would be used for it."""
         ret = ""
         for letter in word:
             if letter.lower() in self._guesses_made:
@@ -79,19 +103,24 @@ class HangmanAgent():
         return ret
 
     def _is_valid_guess(self, guess):
+        """Take a user's guess and return if it is valid."""
         return guess.isalpha()
 
     def _is_valid_letter(self, guess):
+        """Take an arbitrary letter and return if it is permitted for use in the secret word."""
         return self._is_valid_guess(guess) or guess == SPACE_IN
 
+    # The following functions are used to progress the game to the next state.
 
     def make_guess(self):
+        """Receive the user's next guess and update the game state. Return whether the guess was correct."""
         guess = self._input_guess()
         self._guesses_made.append(guess)
         self._guesses_made.sort()
         return self._test_guess(guess)
 
     def _input_guess(self):
+        """Receive the user's next guess as an input and return whether the guess was correct."""
         guess = None
         while True:
             try:
@@ -110,13 +139,16 @@ class HangmanAgent():
         return guess
     
     def _test_guess(self, guess):
+        """Take a user's guess and update the game state, return whether it was a correct guess or not."""
         if guess not in self.pattern:
             self._guesses_left -= 1
             return False
         return True
     
+    # The following functions are used to determine if the game is in an end state.
     
     def is_terminal(self):
+        """Returns whether the game has ended."""
         if self._guesses_left == 0:
             return True
 
@@ -127,9 +159,10 @@ class HangmanAgent():
 
         return True
 
-
-
 class EvilAgent(HangmanAgent):
+    """
+    A class used to play an evil game of Hangman. Evil Hangman changes words as much as possible so the player will lose.
+    """
     @property
     def pattern(self):
         return self._pattern
@@ -140,6 +173,7 @@ class EvilAgent(HangmanAgent):
     
     def __init__(self):
         pass
+
 
     def _reset(self):
         self._guesses_left = 14
@@ -186,6 +220,7 @@ class EvilAgent(HangmanAgent):
         return super()._test_guess(guess)
 
     def _get_best_pattern(self, patterns, guess):
+        """Review the map of patterns and frequences to choose the agent's preferred solution"""
         maxkey = None
         maxfreq = -1
         for key in patterns:
@@ -201,6 +236,8 @@ class EvilAgent(HangmanAgent):
         return maxkey
 
 class HelpAgent(EvilAgent):
+    """ 
+    A class used to play a game of Hepful Hangman. Helpful Hangman changes words as much as possible so the player will win."""
     def __init__(self):
         super().__init__()
 
@@ -233,9 +270,6 @@ class HelpAgent(EvilAgent):
 
             if opt0 or opt1 or opt2 or opt3 or opt4:
                 if opt0 or maxkey is None or guess in key:
-                    # print("Winner!",opt0,opt1,opt2,opt3)
-                    # print(key, freq, len(letc))
-
                     maxlet = len(letc)
                     maxfreq = freq
                     maxkey = key
@@ -246,6 +280,9 @@ class HelpAgent(EvilAgent):
         return maxkey
     
 class PlayerAgent(HangmanAgent):
+    """
+    A class used to play a two-player game of Hangman.
+    """
     def __init__(self):
         super().__init__()
     

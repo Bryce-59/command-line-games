@@ -1,34 +1,108 @@
+"""Command-Line TicTacToe
+
+This script allows the user to play a game of TicTacToe.
+
+The user can play against three levels of rudimentary 
+Artificial Intelligence or against a human player. 
+
+This file contains the following classes:
+    * TicTacToe - a class that represents the a game of TicTacToe
+    and keeps track of the current game's state
+
+This file contains the following functions:
+    * main - the main function of the script, which activates the game
+"""
+
 import random
 import time
-from variables import PLAYER_ONE, PLAYER_TWO, EMPTY_SPACE
+
 from agents import PlayerAgent, RandomAgent, FlawedAgent, UnbeatableAgent 
+from variables import PLAYER_ONE, PLAYER_TWO, EMPTY_SPACE
 
 class TicTacToe:
+    """
+    A class used to represent a game of TicTacToe.
+    ...
+
+    Attributes
+    ----------
+    
+    board : list
+        a representation of the game board as a 2D-list of symbols 
+
+    Methods
+    -------
+    get_winner()
+        Return the winner if the game is in a terminal state, else None.
+    is_terminal()
+        Return whether the game has reached a terminal state.
+    print_board()
+        Print a representation of the current game board to the output. 
+    take_turn(player)
+        Take in a player agent and progress to the state that  the player agent chooses.
+    start_game()
+        Reset the internal state. Must be called before a game can be played.
+    """
     class _State:
+        """
+        A private inner class used to represent a single state of a TicTacToe game.
+        ...
+
+        Attributes
+        ----------
+        
+        board : list
+            a representation of the game board as a 2D-list of symbols 
+        children : list
+            the list of states that the current state can progress to
+        is_terminal : bool
+            whether the current state is a terminal state
+        player : str
+            the symbol that represents the player that should take the next turn
+        winner : str or None
+            the symbol that represents the player that won, if one exists
+        Methods
+        -------
+        print_board()
+            Print a representation of the current game board to the output. 
+        """
+
         @property
         def board(self):
+            """a representation of the game board as a 2D-list of symbols"""
             return [r[:] for r in self._board]
         
         @property
         def children(self):
+            """the list of states that the current state can progress to"""
             ret = self._children.copy()
             random.shuffle(ret)
             return ret 
         
         @property
-        def player(self):
-            return self._next_player
-        
-        @property
         def is_terminal(self):
+            """whether the current state is a terminal state"""
             return self._win_state[0]
 
         @property
+        def player(self):
+            """the symbol that represents the player that should take the next turn"""
+            return self._next_player
+
+        @property
         def winner(self):
+            """the symbol that represents the player that won, if one exists"""
             return self._win_state[1]
 
-
         def __init__(self, board, next_player):
+            """
+            Parameters
+            ----------
+            board : list
+                The representation of the game board as a 2D-list of symbols
+            next_player : str
+                The symbol that represents the player that should take the next turn
+            """
             self._board = board
             self._next_player = next_player
             self._children = []
@@ -73,11 +147,11 @@ class TicTacToe:
             # Test whether a tie or a non-terminal State.
             return (not any(EMPTY_SPACE in r for r in self._board), None)
 
-        def add_child(self, node):
-            if node not in self._children:
-                self._children.append(node)
-
         def _generate_children(self):
+            """Creates the list of game states that this State can progress to and adds them to self.children.
+            
+            Should only be run once.
+            """
             if not self.is_terminal:
 
                 child_player = PLAYER_ONE if self._next_player == PLAYER_TWO else PLAYER_TWO
@@ -88,7 +162,8 @@ class TicTacToe:
                         if child_board[r][c] == EMPTY_SPACE:
                             child_board[r][c] = self._next_player
                             child = TicTacToe._State(child_board, child_player)
-                            self.add_child(child)
+                            if child not in self._children:
+                                self._children.append(child)
             
 
         def print_board(self):
@@ -111,6 +186,7 @@ class TicTacToe:
 
     @property
     def board(self):
+        """a representation of the game board as a 2D-list of symbols"""
         return self.state.board
 
     def __init__(self):
@@ -119,14 +195,15 @@ class TicTacToe:
         self._generate_tree(self.root)
 
     def _generate_tree(self, node):
-        """Recursively builds the subtree of States beginning with this State.
+        """Recursively builds the subtree of States beginning with this State (node).
             
-            In theory, the recursion depth should never exceed 9."""
+        In theory, the recursion depth should never exceed 9."""
         node._generate_children()
         for child in node._children:
             self._generate_tree(child)
 
     def _get_root(self):
+        """Generates the root node as an entirely empty 3x3 board."""
         board = []
         for r in range(3):
             row = []
@@ -137,6 +214,7 @@ class TicTacToe:
         return board
     
     def _will_tie(self, state):
+        """Takes in a state and looks ahead to see if it is guaranteed to result in a tie."""
         ret = state.winner == None
 
         for child in state._children:
@@ -148,29 +226,36 @@ class TicTacToe:
         return ret
     
     def get_winner(self):
+        """If the current State (self.state) has a winner, return it. Else None."""
         return self.state.winner
 
     def is_terminal(self):
+        """Return whether the current State (self.state) is a terminal state."""
         ret = self.state.is_terminal
         if ret or self._will_tie(self.state):
             return True
         return ret
 
     def print_board(self):
+        """Print an ASCII portrayal of the TicTacToe State."""
         self.state.print_board()
 
     def take_turn(self, player):
+        """take_turn(player)
+        Take in a player agent and progress to the state that  the player agent chooses.
+        """
         nxt = player.select_move(self.state)
         assert nxt != None and nxt in self.state._children
         self.state = nxt
 
     def start_game(self):
+        """start_game()
+        Reset the internal state. Must be called before a game can be played.
+        """
         self.state = self.root
 
-def _start():
-    pass
-
-def ask_ai(difficulty, name, turn):
+def _choose_ai(difficulty, name, turn):
+    """Given a difficulty level (difficulty), return the appropriate Agent"""
     assert(difficulty > 0 and difficulty <= 3)
 
     ret = None
@@ -182,7 +267,8 @@ def ask_ai(difficulty, name, turn):
         ret = UnbeatableAgent(name, turn)
     return ret
 
-def ask_difficulty(message):
+def _ask_difficulty(message):
+    """Receive the difficulty as a user input and return it"""
     ret = None
     while True:
         try:
@@ -220,11 +306,11 @@ def main():
         if num_players == 0: 
             print()
             print("You found the secret 0-player mode!")
-            ai_level_bonus = ask_difficulty("What level should the first CPU be?")
-            ai_level = ask_difficulty("What level should the second CPU be?")
+            ai_level_bonus = _ask_difficulty("What level should the first CPU be?")
+            ai_level = _ask_difficulty("What level should the second CPU be?")
 
         if num_players == 1:
-            ai_level = ask_difficulty("What level CPU do you want to play against?")
+            ai_level = _ask_difficulty("What level CPU do you want to play against?")
 
         assert num_players == 0 or num_players == 1 or num_players == 2
         assert ai_level >= 0 and ai_level <= 3
@@ -242,13 +328,13 @@ def main():
 
         p1 = PlayerAgent(p1_name, p1_turn)
         if num_players == 0:
-            p1 = ask_ai(ai_level_bonus, p1_name, p1_turn)
+            p1 = _choose_ai(ai_level_bonus, p1_name, p1_turn)
 
         p2 = None
         if num_players == 2:
             p2 = PlayerAgent(p2_name, p2_turn)
         else:
-            p2 = ask_ai(ai_level, p2_name, p2_turn)
+            p2 = _choose_ai(ai_level, p2_name, p2_turn)
 
         assert p2 is not None
 

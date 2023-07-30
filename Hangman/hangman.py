@@ -1,8 +1,19 @@
-from variables import SECRET, SPACE_IN, SPACE_OUT
-from agents import EvilAgent, HangmanAgent, HelpAgent, PlayerAgent
+"""Command-Line Hangman
 
-def _start():
-    pass
+This script allows the user to play a game of Hangman.
+
+There are four modes available: Normal Mode, Easy Mode, Hard Mode, and Two-Player.
+Normal Mode represents an average game of Hangman. In Easy Mode and Hard Mode,
+the game manager will choose a word based on the user's guesses to make the game
+easier or harder. In Two-Player, a human will enter the secret word and the user
+must guess it.
+
+This file contains the following functions:
+    * main - the main function of the script, which activates the game
+"""
+
+from agents import EvilAgent, HangmanAgent, HelpAgent, PlayerAgent
+from variables import SECRET, SPACE_IN, SPACE_OUT
 
 def main():
     print("Welcome to the Hangman Player!")
