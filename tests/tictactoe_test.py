@@ -8,6 +8,7 @@ import unittest
 import sys
 
 sys.path.append("..")
+
 from cmdgames.tictactoe.variables import PLAYER_ONE as x, PLAYER_TWO as o, EMPTY_SPACE as e
 from cmdgames.tictactoe.agents import PlayerAgent, RandomAgent, FlawedAgent, UnbeatableAgent
 from cmdgames.tictactoe.tictactoe import TicTacToe
