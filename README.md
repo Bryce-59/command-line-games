@@ -1,10 +1,6 @@
 # About the Project
 A collection of terminal-based games with basic artificial intelligence.
 
-# Getting Started
-
-# How to Use
-
 # Roadmap
 - [x] Tic Tac Toe
 - [x] Hangman
