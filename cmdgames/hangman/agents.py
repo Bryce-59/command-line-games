@@ -10,8 +10,9 @@ There are four agents which can be imported to other files:
 """
 
 import pwinput
-from variables import SECRET, SPACE_IN, SPACE_OUT
 import random
+
+from variables import SECRET, SPACE_IN, SPACE_OUT
 
 class HangmanAgent():
     """

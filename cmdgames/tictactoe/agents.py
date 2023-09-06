@@ -11,7 +11,11 @@ There are four agents which can be imported to other files:
 
 from abc import ABC, abstractmethod
 import random
-from variables import EMPTY_SPACE
+
+
+import sys
+sys.path.append("../cmdgames/tictactoe")
+import variables as var
 
 class Agent(ABC):
     """
@@ -199,7 +203,7 @@ class PlayerAgent(Agent):
                     print("Sorry, "+str(row)+" is not a valid row")
                     print()
             
-            if tmp[row-1][col-1] != EMPTY_SPACE:
+            if tmp[row-1][col-1] != var.EMPTY_SPACE:
                 print("Sorry, that space has already been taken!")
                 print()
             else:
