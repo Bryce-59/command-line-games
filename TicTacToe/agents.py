@@ -190,7 +190,8 @@ class PlayerAgent(Agent):
             row = 0
             while True:
                 try:
-                    row = int(input("Select a row: "))
+                    tmp_row = input("Select a row: ")
+                    row = int(tmp_row)
                     if row <= 0 or row > len(tmp):
                         raise ValueError
                     break

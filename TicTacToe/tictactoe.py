@@ -14,6 +14,7 @@ This file contains the following functions:
 """
 
 import random
+import threading
 import time
 
 from agents import PlayerAgent, RandomAgent, FlawedAgent, UnbeatableAgent 
@@ -281,15 +282,20 @@ def _ask_difficulty(message):
 
     return ret
 
+global_tree = None
+def create_tree():
+    global global_tree
+    global_tree = TicTacToe()
+
 def main():
     print("Welcome to the TicTacToe Player!")
-    print("Loading Game...")
-    game_tree = TicTacToe()
-    print("Done!")
     print()
 
+    game_tree = None
+    t1 = threading.Thread(target=create_tree)
+    t1.start()
+
     while True:
-        game_tree.start_game()
         num_players = 0
         while True:
             try:
@@ -340,6 +346,16 @@ def main():
 
         player_1 = p1 if p1.player == PLAYER_ONE else p2
         player_2 = p1 if p1.player == PLAYER_TWO else p2
+
+        print("Loading Game...")
+        if t1 is not None:
+            if t1.is_alive():
+                t1.join()
+            
+            game_tree = global_tree
+            t1 = None
+        game_tree.start_game()
+        print("Done!")
 
         while not game_tree.is_terminal():
             print()
