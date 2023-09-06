@@ -5,10 +5,12 @@ Command-Line TicTacToe structures.
 """
 
 import unittest
+import sys
 
-from agents import PlayerAgent, RandomAgent, FlawedAgent, UnbeatableAgent
-from tictactoe import TicTacToe
-from variables import PLAYER_ONE as x, PLAYER_TWO as o, EMPTY_SPACE as e
+sys.path.append("..")
+from cmdgames.tictactoe.variables import PLAYER_ONE as x, PLAYER_TWO as o, EMPTY_SPACE as e
+from cmdgames.tictactoe.agents import PlayerAgent, RandomAgent, FlawedAgent, UnbeatableAgent
+from cmdgames.tictactoe.tictactoe import TicTacToe
 
 test_game = TicTacToe()
 
