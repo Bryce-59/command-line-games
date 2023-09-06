@@ -14,10 +14,11 @@ This file contains the following functions:
 """
 
 import random
+import threading
 import time
 
-from agents import PlayerAgent, RandomAgent, FlawedAgent, UnbeatableAgent 
-from variables import PLAYER_ONE, PLAYER_TWO, EMPTY_SPACE
+import variables as var
+import agents 
 
 class TicTacToe:
     """
@@ -120,16 +121,16 @@ class TicTacToe:
             # Initialize values related to diagonals.
             p_neg = self._board[0][0]
             p_pos = self._board[0][-1]
-            diag_neg = p_neg != EMPTY_SPACE
-            diag_pos = p_pos != EMPTY_SPACE
+            diag_neg = p_neg != var.EMPTY_SPACE
+            diag_pos = p_pos != var.EMPTY_SPACE
 
 
             for i in range(3):
                 # Initialize values related to the row and columns.
                 p_row = self._board[i][0]
                 p_col = self._board[0][i]
-                row = p_row != EMPTY_SPACE
-                col = p_col != EMPTY_SPACE
+                row = p_row != var.EMPTY_SPACE
+                col = p_col != var.EMPTY_SPACE
 
                 # Test the row and column cases.
                 for j in range(3):
@@ -145,7 +146,7 @@ class TicTacToe:
                 return (True, p_neg) if diag_neg else (True, p_pos)
             
             # Test whether a tie or a non-terminal State.
-            return (not any(EMPTY_SPACE in r for r in self._board), None)
+            return (not any(var.EMPTY_SPACE in r for r in self._board), None)
 
         def _generate_children(self):
             """Creates the list of game states that this State can progress to and adds them to self.children.
@@ -154,12 +155,12 @@ class TicTacToe:
             """
             if not self.is_terminal:
 
-                child_player = PLAYER_ONE if self._next_player == PLAYER_TWO else PLAYER_TWO
+                child_player = var.PLAYER_ONE if self._next_player == var.PLAYER_TWO else var.PLAYER_TWO
                 for r in range(3):
                     for c in range(3):
                         child_board = self.board
 
-                        if child_board[r][c] == EMPTY_SPACE:
+                        if child_board[r][c] == var.EMPTY_SPACE:
                             child_board[r][c] = self._next_player
                             child = TicTacToe._State(child_board, child_player)
                             if child not in self._children:
@@ -190,7 +191,7 @@ class TicTacToe:
         return self.state.board
 
     def __init__(self):
-        self.root = TicTacToe._State(self._get_root(), PLAYER_ONE)
+        self.root = TicTacToe._State(self._get_root(), var.PLAYER_ONE)
         self.start_game()
         self._generate_tree(self.root)
 
@@ -208,7 +209,7 @@ class TicTacToe:
         for r in range(3):
             row = []
             for c in range(3):
-                row.append(EMPTY_SPACE)
+                row.append(var.EMPTY_SPACE)
             board.append(row)
 
         return board
@@ -260,11 +261,11 @@ def _choose_ai(difficulty, name, turn):
 
     ret = None
     if difficulty == 1:
-        ret = RandomAgent(name, turn)
+        ret = agents.RandomAgent(name, turn)
     elif difficulty == 2:
-        ret = FlawedAgent(name, turn)
+        ret = agents.FlawedAgent(name, turn)
     elif difficulty == 3:
-        ret = UnbeatableAgent(name, turn)
+        ret = agents.UnbeatableAgent(name, turn)
     return ret
 
 def _ask_difficulty(message):
@@ -281,15 +282,20 @@ def _ask_difficulty(message):
 
     return ret
 
+global_tree = None
+def create_tree():
+    global global_tree
+    global_tree = TicTacToe()
+
 def main():
     print("Welcome to the TicTacToe Player!")
-    print("Loading Game...")
-    game_tree = TicTacToe()
-    print("Done!")
     print()
 
+    game_tree = None
+    t1 = threading.Thread(target=create_tree)
+    t1.start()
+
     while True:
-        game_tree.start_game()
         num_players = 0
         while True:
             try:
@@ -321,25 +327,35 @@ def main():
         p1_name = "CPU_1" if num_players == 0 else p1_name
         p2_name = "CPU_2" if num_players == 0 else p2_name
 
-        p1_turn = PLAYER_ONE # if num_players == 2 or random.randint(1, 2) == 1 else PLAYER_TWO
-        p2_turn = PLAYER_TWO if p1_turn == PLAYER_ONE else PLAYER_ONE
+        p1_turn = var.PLAYER_ONE # if num_players == 2 or random.randint(1, 2) == 1 else var.PLAYER_TWO
+        p2_turn = var.PLAYER_TWO if p1_turn == var.PLAYER_ONE else var.PLAYER_ONE
 
         assert p1_turn != p2_turn
 
-        p1 = PlayerAgent(p1_name, p1_turn)
+        p1 = agents.PlayerAgent(p1_name, p1_turn)
         if num_players == 0:
             p1 = _choose_ai(ai_level_bonus, p1_name, p1_turn)
 
         p2 = None
         if num_players == 2:
-            p2 = PlayerAgent(p2_name, p2_turn)
+            p2 = agents.PlayerAgent(p2_name, p2_turn)
         else:
             p2 = _choose_ai(ai_level, p2_name, p2_turn)
 
         assert p2 is not None
 
-        player_1 = p1 if p1.player == PLAYER_ONE else p2
-        player_2 = p1 if p1.player == PLAYER_TWO else p2
+        player_1 = p1 if p1.player == var.PLAYER_ONE else p2
+        player_2 = p1 if p1.player == var.PLAYER_TWO else p2
+
+        print("Loading Game...")
+        if t1 is not None:
+            if t1.is_alive():
+                t1.join()
+            
+            game_tree = global_tree
+            t1 = None
+        game_tree.start_game()
+        print("Done!")
 
         while not game_tree.is_terminal():
             print()
@@ -348,7 +364,7 @@ def main():
             game_tree.print_board()
             print()
             print(player_1.name+", it is your turn!")
-            if not isinstance(player_1, PlayerAgent):
+            if not isinstance(player_1, agents.PlayerAgent):
                 time.sleep(2)
 
             game_tree.take_turn(player_1)
@@ -362,7 +378,7 @@ def main():
             game_tree.print_board()
             print()
             print(player_2.name+", it is your turn!")
-            if not isinstance(player_2, PlayerAgent):
+            if not isinstance(player_2, agents.PlayerAgent):
                 time.sleep(2)
 
             game_tree.take_turn(player_2)
@@ -372,9 +388,9 @@ def main():
         game_tree.print_board()
         print()
 
-        if game_tree.get_winner() == PLAYER_ONE:
+        if game_tree.get_winner() == var.PLAYER_ONE:
             print(player_1.name+" wins!!")
-        elif game_tree.get_winner() == PLAYER_TWO:
+        elif game_tree.get_winner() == var.PLAYER_TWO:
             print(player_2.name+" wins!!")
         else:
             print("It is a tie.")
