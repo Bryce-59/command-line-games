@@ -6,6 +6,9 @@ Command-Line TicTacToe structures.
 
 import unittest
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../src/tictactoe")
 from agents import PlayerAgent, RandomAgent, FlawedAgent, UnbeatableAgent
 from tictactoe import TicTacToe
 from variables import PLAYER_ONE as x, PLAYER_TWO as o, EMPTY_SPACE as e
